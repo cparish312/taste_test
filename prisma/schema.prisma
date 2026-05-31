@@ -1,0 +1,100 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Session {
+  id                       String   @id @default(cuid())
+  userPrompt               String
+  taskSpec                 Json
+  inferenceState           Json?
+  inferenceResponseCursor  Int      @default(0)
+  status                   String   @default("active") // active, finalizing, complete
+  finalAnswer              String?
+  finalData                Json?
+  predictAllStatus          String   @default("idle") // idle, running, complete, failed
+  createdAt                DateTime @default(now())
+  updatedAt                DateTime @updatedAt
+
+  batches     Batch[]
+  items       Item[]
+  responses   Response[]
+  predictions Prediction[]
+}
+
+model Batch {
+  id              String   @id @default(cuid())
+  sessionId       String
+  number          Int
+  status          String   @default("generating") // generating, complete, failed
+  basedOnCount    Int
+  strategySummary String?
+  rawOutput       Json?
+  error           String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  session Session @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  items   Item[]
+
+  @@unique([sessionId, number])
+}
+
+model Item {
+  id            String   @id @default(cuid())
+  sessionId     String
+  batchId       String
+  indexInBatch  Int
+  type          String   @default("text") // text or image
+  title         String
+  body          String
+  imageUrl      String?
+  positiveLabel String
+  negativeLabel String
+  neutralLabel  String
+  hiddenPurpose String?
+  metadata      Json?
+  createdAt     DateTime @default(now())
+
+  session    Session     @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  batch      Batch       @relation(fields: [batchId], references: [id], onDelete: Cascade)
+  response   Response?
+  prediction Prediction?
+
+  @@index([sessionId])
+  @@index([batchId])
+}
+
+model Prediction {
+  id        String   @id @default(cuid())
+  sessionId String
+  itemId    String   @unique
+  predicted String   // positive, negative, neutral
+  actual    String?
+  correct   Boolean?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  session Session @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  item    Item    @relation(fields: [itemId], references: [id], onDelete: Cascade)
+
+  @@index([sessionId])
+}
+
+model Response {
+  id             String   @id @default(cuid())
+  sessionId      String
+  itemId         String   @unique
+  value          String // positive, negative, neutral
+  responseTimeMs Int?
+  createdAt      DateTime @default(now())
+
+  session Session @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  item    Item    @relation(fields: [itemId], references: [id], onDelete: Cascade)
+
+  @@index([sessionId])
+}

@@ -1,0 +1,275 @@
+export function createTaskSpecPrompt(userPrompt: string): string {
+  return `You are designing a generic adaptive swipe session.
+
+The user will provide a natural language task. Your job is to convert that task into a task spec for a swipe-based preference/inference engine.
+
+IMPORTANT — how swiping works:
+- Swipes do NOT answer the user's original question directly.
+- Each card shows a stimulus (example, vibe, option, trait, scenario, title, etc.).
+- The user swipes to react to THAT CARD ONLY — their taste, interest, familiarity, or fit.
+- The system collects many such reactions, then synthesizes the final answer later.
+- Example for "recommend me a movie": cards might show specific films, genres, directors, or vibes. Buttons might be "Love it" / "Not for me" / "Haven't seen it" — NOT "Watch it" / "Don't watch" / "Maybe later".
+
+Do not create actual swipe cards yet. Create only the task spec.
+
+Rules:
+- Do not assume a hardcoded template.
+- Define what positive, negative, and neutral mean as reactions TO CARD CONTENT for this task.
+- Default button labels (use unless you have a strong reason to customize):
+  - negativeLabel (left): "Disagree"
+  - positiveLabel (right): "Agree"
+  - neutralLabel (bottom): "Not sure"
+- Cards are statements or stimuli the user agrees/disagrees with — not final-answer buttons.
+- Labels must describe the user's reaction to the card stimulus, NOT whether they accept the final answer or deliverable.
+- Never use labels like "Watch it", "Take this advice", "Left", "Right", "Yes", "No", or similar final-answer / directional placeholders.
+- Only customize labels if a task-specific neutral label is clearly better (e.g. "Haven't seen it" for unfamiliar movies). Left/right should stay Disagree/Agree.
+- The item strategy must describe what kinds of probe cards/stimuli to show to learn preferences — not cards that deliver the final answer.
+- The adaptation strategy should describe how to use swipe reactions to choose better future probe cards.
+- The final answer instruction should say to give a direct, minimal answer to the original task after enough swipes.
+- For entity tasks (a person, movie, job, song, etc.): the final answer must name specific real-world examples — not a vague archetype, type, or description without names.
+- Example final answers: one movie title; 1–3 celebrity names; one job title — not "someone artistic with dark hair."
+- Avoid clinical, medical, or overly certain claims.
+- Be useful and direct.
+
+User task:
+${userPrompt}
+
+Return valid JSON matching the schema.`;
+}
+
+export function createInitialInferenceStatePrompt(
+  userPrompt: string,
+  taskSpecJson: string,
+): string {
+  return `You are bootstrapping the inference model for a TasteTest adaptive swipe session.
+
+The user task:
+${userPrompt}
+
+Task spec:
+${taskSpecJson}
+
+Create the initial belief state for what the system needs to learn before it can answer the user's task.
+
+This state drives which probe cards get shown. Cards test dimensions/tradeoffs/constraints — they do NOT present final answers or candidate deliverables.
+
+Rules:
+- Define 3–12 dimensions: aspects that matter for answering this task (e.g. for job rec: autonomy, compensation, team size, domain, risk tolerance).
+- Identify gating/prerequisite dimensions — things that must be learned early because they dramatically narrow the answer space (e.g. for "guess my celebrity crush": who the user is attracted to / gender preference BEFORE aesthetic fine-tuning).
+- Put gating dimensions with confidence "unknown" at the front of nextFocus. They should be probed in the first batch of cards.
+- Use stable snake_case ids (e.g. "attraction_gender", "work_life_balance").
+- Mark importance "high" for gating dimensions.
+- Mark importance and start with confidence "unknown" and signal "unknown" unless obvious from the task alone.
+- Add constraints the system should learn (dealbreakers, hard requirements) when relevant.
+- Add hypotheses only if useful starting guesses exist; otherwise leave empty.
+- openQuestions: what is still unknown and worth probing — list gating questions first.
+- nextFocus: 1–3 highest-priority areas to probe first (gating/prerequisite unknowns before refinements).
+- forbiddenCardPatterns: card types to avoid (e.g. "presenting the final answer", "naming the user's crush as the deliverable"). Showing real examples as taste probes is OK and often good (e.g. react to a celebrity, a film, a job vibe).
+- Do not assume the user has already answered anything.
+
+Return valid JSON matching the schema.`;
+}
+
+export function updateInferenceStatePrompt(
+  userPrompt: string,
+  taskSpecJson: string,
+  inferenceStateJson: string,
+  newResponsesJson: string,
+): string {
+  return `You are updating the inference state for a TasteTest adaptive swipe session.
+
+The user task:
+${userPrompt}
+
+Task spec:
+${taskSpecJson}
+
+Current inference state:
+${inferenceStateJson}
+
+New card responses since last update (only these — do not re-process old ones):
+${newResponsesJson}
+
+Return ONLY a delta to merge into the current state. Do NOT rewrite or repeat unchanged fields.
+
+For update objects, use null on fields that should not change (e.g. label: null means keep existing label).
+Use empty arrays for list fields with no changes.
+
+Rules:
+- Update confidence/signal/evidence for dimensions affected by new responses.
+- addEvidence: short strings citing what the swipe implied (not the card title verbatim unless helpful).
+- You MAY add new dimensions, constraints, or hypotheses if the responses reveal important axes not yet tracked.
+- You MAY remove dimensions/constraints/hypotheses that proved irrelevant.
+- removeOpenQuestions when answered; addOpenQuestions for newly discovered gaps.
+- setNextFocus: replace with 1–3 highest-priority areas to probe next (most informative gaps). Keep unresolved gating/prerequisite dimensions in focus until confidence is at least medium.
+- addForbiddenCardPatterns if you notice unhelpful card patterns emerging.
+- Keep deltas minimal — only include arrays with actual changes (empty arrays are fine).
+- Do not overclaim confidence from a single swipe.
+- If a response was neutral, often lower confidence or mark signal as mixed/neutral rather than jumping to strong conclusions.
+
+Return valid JSON matching the delta schema.`;
+}
+
+export function generateBatchPrompt(
+  userPrompt: string,
+  taskSpecJson: string,
+  inferenceStateJson: string,
+  historyJson: string,
+  batchNumber: number,
+): string {
+  const firstBatchNote =
+    batchNumber === 1
+      ? `\nThis is BATCH 1 (first cards the user will see). All 5 cards must target gating/prerequisite nextFocus items — the fundamentals that must be learned before anything else. Do not skip to aesthetic or secondary dimensions.\n`
+      : "";
+
+  return `You are generating the next batch of cards for TasteTest, a generic adaptive swipe-based data collection system.
+
+Batch number: ${batchNumber}${firstBatchNote}
+
+The user gave this task:
+${userPrompt}
+
+Task spec:
+${taskSpecJson}
+
+Current inference state (what we know, don't know, and what to probe next):
+${inferenceStateJson}
+
+Previous cards and responses:
+${historyJson}
+
+Generate exactly 5 new cards. Each batch must include at least 1 image card when a visual probe would help (celebrities, art, aesthetics, places, style references, etc.).
+
+CARD TYPES:
+- type "text": title + body text probe (standard).
+- type "image": the main stimulus is a photo looked up by imageSearchQuery. Use a short title; body is an optional brief caption (can be minimal). imageSearchQuery must be a concrete searchable subject (e.g. "Timothée Chalamet", "impressionist landscape painting", "minimalist interior design") — not vague phrases.
+- At least 1 item per batch must have type "image" with a non-null imageSearchQuery when visuals are at all relevant to the task.
+- For type "text", set imageSearchQuery to null.
+
+CRITICAL — cards are preference probes, NOT the final answer:
+- Target nextFocus and openQuestions in the inference state. At least 3 of 5 cards should directly test current nextFocus items.
+- If a gating/prerequisite dimension is still unknown (importance high, confidence unknown/low), prioritize it — especially in early batches.
+- Each card should test a dimension, tradeoff, constraint, vibe, or concrete example — NOT deliver the final guess.
+- Concrete examples as probes are encouraged when they test a dimension (e.g. react to a named celebrity, film, or archetype to learn taste). Forbidden: presenting someone/something AS the session's final answer.
+- For "guess my celebrity crush": early cards must clarify who the user is attracted to (e.g. men, women, both, neither) before aesthetic refinement. Use taste probes — celebrity examples, vibe cards, tradeoffs — not "your crush is X."
+- For "recommend my new job": test autonomy, compensation vs mission, team size, etc. Do NOT present the final job pick.
+- For "recommend me a movie": test genres, tones, directors, tropes — do NOT present the final movie pick.
+- Button labels react to THIS CARD. Default to Disagree (left), Agree (right), Not sure (bottom).
+- Only customize neutralLabel when task-specific wording helps (e.g. "Don't know them", "Haven't seen it"). Left is always Disagree, right is always Agree.
+- Phrase cards as clear statements or vibes the user can agree/disagree with.
+- Respect forbiddenCardPatterns in the inference state.
+
+Rules:
+- Do not repeat previous cards.
+- Do not ask direct explanation questions.
+- Do not ask the user to type anything.
+- Do not present any card as the final answer or deliverable.
+- Each card should reduce uncertainty on a tracked dimension or open question.
+- Set targetDimensionId to the dimension id this card primarily tests, or null if none applies.
+- targetDimensionId must always be present on every item (use null when not applicable).
+- type must always be present: "text" or "image".
+- imageSearchQuery must always be present: null for text cards, a concrete search query for image cards.
+- hiddenPurpose must name which dimension/question/hypothesis the card tests.
+- SWIPE LABELS (required on every item — use null to accept defaults):
+  - negativeLabel: default "Disagree" (left). Set null to use default.
+  - positiveLabel: default "Agree" (right). Set null to use default.
+  - neutralLabel: default "Not sure" (bottom). Set null to use default, or provide a better task-specific neutral when needed.
+- Never use Left, Right, Yes, No, Positive, Negative, or other placeholders.
+- Include a mix guided by inference state: confirm strong signals, clarify unknowns, test boundaries, explore emerging hypotheses.
+- Keep cards concise and interesting.
+
+Return valid JSON:
+{
+  "strategySummary": "short hidden summary of what this batch is probing",
+  "items": [
+    {
+      "type": "image",
+      "title": "...",
+      "body": "optional short caption",
+      "positiveLabel": null,
+      "negativeLabel": null,
+      "neutralLabel": null,
+      "hiddenPurpose": "...",
+      "targetDimensionId": "dimension_id_or_null",
+      "imageSearchQuery": "Timothée Chalamet"
+    }
+  ]
+}`;
+}
+
+export function finalizeSessionPrompt(
+  userPrompt: string,
+  taskSpecJson: string,
+  inferenceStateJson: string,
+  fullHistoryJson: string,
+): string {
+  return `You are producing the final answer for a TasteTest adaptive swipe session.
+
+The user's original task:
+${userPrompt}
+
+Task spec:
+${taskSpecJson}
+
+Inference state (structured summary of what was learned):
+${inferenceStateJson}
+
+Cards shown and user responses:
+${fullHistoryJson}
+
+Synthesize the inference state and swipe evidence into the final answer.
+
+Rules:
+- Give the direct deliverable the user asked for. Do not recap the swiping process.
+- Name specific real-world entities when the task implies a person, place, title, or thing:
+  - Celebrity crush / who you'd like → 1 primary name, or top 3 ranked names (real celebrities with full names). Never only a vague type like "someone artistic with dark hair."
+  - Movie/music/food rec → specific title(s)
+  - Job rec → specific role/type or example
+- Lead with the name(s) or title(s) in the first line. Then 1–2 sentences per pick on why they fit.
+- For pure personality/taste inference with no entity requested: give a clear direct inference with brief caveats.
+- Use inference state as primary evidence; swipe history supports it.
+- Do not list every card or dimension in the answer.
+- Do not overclaim.
+- Do not mention implementation details, cards, swipes, or inference state unless the user asked.
+
+Return valid JSON:
+{
+  "answer": "main final answer as markdown",
+  "confidence": "low" | "medium" | "high",
+  "summary": "short summary of what was inferred",
+  "notablePatterns": ["pattern 1", "pattern 2", "pattern 3"],
+  "suggestedNextTests": ["optional next swipe task 1", "optional next swipe task 2"]
+}`;
+}
+
+export function predictResponsePrompt(
+  userPrompt: string,
+  taskSpecJson: string,
+  historyJson: string,
+  currentCardJson: string,
+): string {
+  return `You predict how a user will swipe on the next TasteTest card based on their prior responses.
+
+The user's task:
+${userPrompt}
+
+Task spec:
+${taskSpecJson}
+
+Previous cards and responses (positive = Agree/right, negative = Disagree/left, neutral = Not sure/down):
+${historyJson}
+
+Current card to predict (user has NOT answered this yet):
+${currentCardJson}
+
+Predict the user's most likely response: positive, negative, or neutral.
+
+Rules:
+- Use patterns from prior responses (consistent agrees/disagrees, neutral habits, taste signals).
+- Consider what the current card is testing and how similar past cards were answered.
+- Output only the prediction enum value.
+- Do not explain your reasoning in the output.
+
+Return valid JSON:
+{ "prediction": "positive" | "negative" | "neutral" }`;
+}
