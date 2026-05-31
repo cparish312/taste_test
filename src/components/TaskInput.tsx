@@ -6,8 +6,12 @@ const EXAMPLE_PROMPTS = [
   "Recommend me a movie I'll actually like",
   "Guess my Myers-Briggs and Big 5",
   "Guess my favorite US politician",
-  "Learn my music taste",
+  "Who is my favorite music artist",
   "Tell me what kind of art I like",
+  "Help me design my dream home",
+  "What should my major in college be",
+  "What should my next vacation be?",
+  "Guess if I think cereal is a soup",
   "Figure out what motivates me",
   "Help me choose a startup idea",
 ];

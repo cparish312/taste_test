@@ -140,6 +140,34 @@ ${historyJson}
 
 Generate exactly 5 new cards. Each batch must include at least 1 image card when a visual probe would help (celebrities, art, aesthetics, places, style references, etc.).
 
+WITHIN-BATCH DIVERSITY (high priority):
+- All 5 cards must feel distinct — different angles, stimuli, tones, or subtopics. Avoid 5 variations of the same theme.
+- Prefer at most 1 card per targetDimensionId unless a gating dimension truly requires multiple probes in batch 1.
+- Mix card shapes: concrete named examples, vibe/trait statements, tradeoff framings, boundary tests, and (when relevant) contrasting pairs — not five near-synonyms.
+- Vary expected difficulty: some cards should feel like easy reads from prior swipes, others should be genuine tests.
+- If history is repetitive (e.g. all celebrity photos), deliberately pivot to a different probe style or dimension.
+
+EXPECTED RESPONSE MIX (high priority):
+- Do NOT optimize for cards the user will agree with. A good batch needs disconfirming and boundary probes, not only flattering or on-brand stimuli.
+- Aim for this distribution across the 5 cards:
+  - ~2 cards you expect the user to Agree with (positive) — confirm strong signals from inference state/history.
+  - ~2 cards you expect the user to Disagree with (negative) — test anti-patterns, opposites, dealbreakers, or traits they have rejected.
+  - ~1 card that is genuinely uncertain (could go Agree, Disagree, or Not sure) — highest information value when confidence is low.
+- Use inference state confidence deliberately:
+  - High-confidence dimensions → include BOTH a validating card (likely agree) AND a challenging contrast (likely disagree) when possible.
+  - Unknown/low-confidence dimensions → include cards where you are not sure of the response; do not assume agreement.
+- Construct disagree-likely cards honestly: pick stimuli that conflict with established positive signals or match established negative signals — not strawmen.
+- In strategySummary, briefly note the intended agree/disagree/uncertain mix for this batch.
+
+TONE & VOICE (high priority):
+- Write like a witty friend doing a taste test — NOT a formal survey, quiz, or HR assessment.
+- Use casual, conversational language. Contractions, plain speech, and punchy one-liner titles are encouraged.
+- Include 1–2 cards per batch that are playful, funny, cheeky, or mildly provocative — they must still probe a real dimension.
+- "Provocative" = spicy hot-takes, bold hypotheticals, "be honest…" energy, light roasting — NOT cruel, mean, bigoted, harassing, or NSFW.
+- Vary tone across the batch: mix straight probes with witty or provocative framings. Avoid five cards that all sound like clinical statements.
+- Examples of good voice: "You'd actually sit through a 3-hour artsy film, right?" / "Chaos energy is a personality type and you might have it" / "This vibe is giving 'main character' — guilty?"
+- Image card captions can be short and funny too; don't default to dry descriptions.
+
 CARD TYPES:
 - type "text": title + body text probe (standard).
 - type "image": the main stimulus is a photo looked up by imageSearchQuery. Use a short title; body is an optional brief caption (can be minimal). imageSearchQuery must be a concrete searchable subject (e.g. "Timothée Chalamet", "impressionist landscape painting", "minimalist interior design") — not vague phrases.
@@ -156,7 +184,7 @@ CRITICAL — cards are preference probes, NOT the final answer:
 - For "recommend me a movie": test genres, tones, directors, tropes — do NOT present the final movie pick.
 - Button labels react to THIS CARD. Default to Disagree (left), Agree (right), Not sure (bottom).
 - Only customize neutralLabel when task-specific wording helps (e.g. "Don't know them", "Haven't seen it"). Left is always Disagree, right is always Agree.
-- Phrase cards as clear statements or vibes the user can agree/disagree with.
+- Phrase cards as statements or vibes the user can agree/disagree with — casual and readable, not stiff or corporate.
 - Respect forbiddenCardPatterns in the inference state.
 
 Rules:
@@ -175,12 +203,12 @@ Rules:
   - positiveLabel: default "Agree" (right). Set null to use default.
   - neutralLabel: default "Not sure" (bottom). Set null to use default, or provide a better task-specific neutral when needed.
 - Never use Left, Right, Yes, No, Positive, Negative, or other placeholders.
-- Include a mix guided by inference state: confirm strong signals, clarify unknowns, test boundaries, explore emerging hypotheses.
-- Keep cards concise and interesting.
+- Balance information gain with the response mix above: confirm strong signals, falsify weak guesses, and probe unknowns — not only agreeable cards.
+- Keep cards concise, fun to read, and interesting — personality is a feature.
 
 Return valid JSON:
 {
-  "strategySummary": "short hidden summary of what this batch is probing",
+  "strategySummary": "short hidden summary of what this batch is probing, including intended agree/disagree/uncertain mix",
   "items": [
     {
       "type": "image",
