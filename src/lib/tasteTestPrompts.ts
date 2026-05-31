@@ -140,14 +140,23 @@ ${historyJson}
 
 Generate exactly 5 new cards. Each batch must include at least 1 image card when a visual probe would help (celebrities, art, aesthetics, places, style references, etc.).
 
-WITHIN-BATCH DIVERSITY (high priority):
-- All 5 cards must feel distinct — different angles, stimuli, tones, or subtopics. Avoid 5 variations of the same theme.
-- Prefer at most 1 card per targetDimensionId unless a gating dimension truly requires multiple probes in batch 1.
-- Mix card shapes: concrete named examples, vibe/trait statements, tradeoff framings, boundary tests, and (when relevant) contrasting pairs — not five near-synonyms.
-- Vary expected difficulty: some cards should feel like easy reads from prior swipes, others should be genuine tests.
-- If history is repetitive (e.g. all celebrity photos), deliberately pivot to a different probe style or dimension.
+INFORMATION GAIN (top priority):
+- The goal of every card is to learn something useful — not to entertain, confirm what you already believe, or fill space.
+- Prioritize cards that would most change the final answer if answered differently. Ask: "If the user disagrees here, would my inference shift?" If no, pick a different card.
+- Target nextFocus, openQuestions, and low/unknown-confidence dimensions first. At least 3 of 5 cards must directly probe current nextFocus items.
+- Prefer probes that discriminate between competing hypotheses — cards that split plausible outcomes, not ones where any answer is unsurprising.
+- Skip or defer dimensions already at high confidence unless you need a falsification check (one validating + one challenging card is enough).
+- Do not repeat or lightly rephrase prior cards. If history already tested a dimension, go deeper, test an adjacent tradeoff, or move to the next gap.
+- hiddenPurpose must state what uncertainty this card reduces and which hypothesis it tests or rules out.
+- In strategySummary, name the main uncertainties this batch targets and what you expect to learn from each card.
 
-EXPECTED RESPONSE MIX (high priority):
+WITHIN-BATCH DIVERSITY (in service of information gain):
+- All 5 cards should test different angles, dimensions, or stimuli — redundant probes waste swipes.
+- Prefer at most 1 card per targetDimensionId unless a gating dimension truly requires multiple probes in batch 1.
+- Mix card shapes when it helps discriminate: concrete examples, trait statements, tradeoffs, boundary tests — choose the shape that best splits uncertainty for that dimension.
+- If history is repetitive, pivot to an under-probed dimension rather than another similar card.
+
+EXPECTED RESPONSE MIX (supports information gain):
 - Do NOT optimize for cards the user will agree with. A good batch needs disconfirming and boundary probes, not only flattering or on-brand stimuli.
 - Aim for this distribution across the 5 cards:
   - ~2 cards you expect the user to Agree with (positive) — confirm strong signals from inference state/history.
@@ -159,14 +168,11 @@ EXPECTED RESPONSE MIX (high priority):
 - Construct disagree-likely cards honestly: pick stimuli that conflict with established positive signals or match established negative signals — not strawmen.
 - In strategySummary, briefly note the intended agree/disagree/uncertain mix for this batch.
 
-TONE & VOICE (high priority):
-- Write like a witty friend doing a taste test — NOT a formal survey, quiz, or HR assessment.
-- Use casual, conversational language. Contractions, plain speech, and punchy one-liner titles are encouraged.
-- Include 1–2 cards per batch that are playful, funny, cheeky, or mildly provocative — they must still probe a real dimension.
-- "Provocative" = spicy hot-takes, bold hypotheticals, "be honest…" energy, light roasting — NOT cruel, mean, bigoted, harassing, or NSFW.
-- Vary tone across the batch: mix straight probes with witty or provocative framings. Avoid five cards that all sound like clinical statements.
-- Examples of good voice: "You'd actually sit through a 3-hour artsy film, right?" / "Chaos energy is a personality type and you might have it" / "This vibe is giving 'main character' — guilty?"
-- Image card captions can be short and funny too; don't default to dry descriptions.
+TONE & VOICE (must not reduce information gain):
+- Clarity first: every card must make ONE obvious claim. The user should instantly know what they are agreeing/disagreeing with.
+- title = the clear statement (the thing being swiped on). body = optional short context to clarify the probe — never bury the claim in a joke.
+- Casual wording is fine; humor is optional and only when the claim stays unmistakable. Never sacrifice clarity or probe quality for wit.
+- At most 0–1 cards per batch may use a playful framing — they must still target a high-value uncertainty from nextFocus.
 
 CARD TYPES:
 - type "text": title + body text probe (standard).
@@ -175,7 +181,6 @@ CARD TYPES:
 - For type "text", set imageSearchQuery to null.
 
 CRITICAL — cards are preference probes, NOT the final answer:
-- Target nextFocus and openQuestions in the inference state. At least 3 of 5 cards should directly test current nextFocus items.
 - If a gating/prerequisite dimension is still unknown (importance high, confidence unknown/low), prioritize it — especially in early batches.
 - Each card should test a dimension, tradeoff, constraint, vibe, or concrete example — NOT deliver the final guess.
 - Concrete examples as probes are encouraged when they test a dimension (e.g. react to a named celebrity, film, or archetype to learn taste). Forbidden: presenting someone/something AS the session's final answer.
@@ -184,7 +189,7 @@ CRITICAL — cards are preference probes, NOT the final answer:
 - For "recommend me a movie": test genres, tones, directors, tropes — do NOT present the final movie pick.
 - Button labels react to THIS CARD. Default to Disagree (left), Agree (right), Not sure (bottom).
 - Only customize neutralLabel when task-specific wording helps (e.g. "Don't know them", "Haven't seen it"). Left is always Disagree, right is always Agree.
-- Phrase cards as statements or vibes the user can agree/disagree with — casual and readable, not stiff or corporate.
+- Phrase cards as clear agree/disagree statements — casual wording is fine, but the proposition must be explicit (e.g. "Slow, artsy films are worth sitting through" not "You'd actually sit through a 3-hour artsy film, right?").
 - Respect forbiddenCardPatterns in the inference state.
 
 Rules:
@@ -192,7 +197,7 @@ Rules:
 - Do not ask direct explanation questions.
 - Do not ask the user to type anything.
 - Do not present any card as the final answer or deliverable.
-- Each card should reduce uncertainty on a tracked dimension or open question.
+- Each card should reduce uncertainty on a tracked dimension or open question — if it wouldn't update inference state, replace it.
 - Set targetDimensionId to the dimension id this card primarily tests, or null if none applies.
 - targetDimensionId must always be present on every item (use null when not applicable).
 - type must always be present: "text" or "image".
@@ -203,12 +208,11 @@ Rules:
   - positiveLabel: default "Agree" (right). Set null to use default.
   - neutralLabel: default "Not sure" (bottom). Set null to use default, or provide a better task-specific neutral when needed.
 - Never use Left, Right, Yes, No, Positive, Negative, or other placeholders.
-- Balance information gain with the response mix above: confirm strong signals, falsify weak guesses, and probe unknowns — not only agreeable cards.
-- Keep cards concise, fun to read, and interesting — personality is a feature.
+- Keep cards concise and readable.
 
 Return valid JSON:
 {
-  "strategySummary": "short hidden summary of what this batch is probing, including intended agree/disagree/uncertain mix",
+  "strategySummary": "what uncertainties this batch targets, expected agree/disagree mix, and what each card should learn",
   "items": [
     {
       "type": "image",

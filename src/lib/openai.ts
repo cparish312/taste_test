@@ -217,7 +217,7 @@ export async function generateBatch(
       {
         role: "system",
         content:
-          "You generate preference probe cards with intentional diversity. Tone: casual, sometimes funny or mildly provocative — never stiff or survey-like. Include cards the user will likely agree AND disagree with. Default buttons: Disagree/Agree/Not sure. Return exactly 5 items as structured JSON.",
+          "You generate preference probe cards optimized for information gain. Each card must test one clear claim and reduce uncertainty on a tracked dimension. Clarity first; light humor only if it doesn't hurt learning. Include agree and disagree probes. Default buttons: Disagree/Agree/Not sure. Return exactly 5 items as structured JSON.",
       },
       {
         role: "user",
