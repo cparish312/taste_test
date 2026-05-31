@@ -138,7 +138,17 @@ ${inferenceStateJson}
 Previous cards and responses:
 ${historyJson}
 
-Generate exactly 5 new cards. Each batch must include at least 1 image card when a visual probe would help (celebrities, art, aesthetics, places, style references, etc.).
+Generate exactly 5 new cards.
+
+IMAGE CARDS (required — do not skimp):
+- Include **2–3 image cards per batch** (minimum 2). Default to 3 when the task involves people, aesthetics, places, style, art, food, vacation vibes, politics, or anything visual.
+- Only use 1 image card if the task is purely abstract with zero visual angle (rare).
+- Image cards often have the highest information gain for taste/aesthetic/preference tasks — use them aggressively.
+- type "image": the photo (via imageSearchQuery) IS the stimulus. title = clear reaction claim about what they're seeing. body = optional caption with a bit of character.
+- imageSearchQuery must be a concrete searchable subject (e.g. "Timothée Chalamet", "Brutalist architecture interior", "Tokyo street at night") — real names, places, or visual styles, not vague phrases.
+- For type "text", set imageSearchQuery to null.
+- Vary image subjects across the batch — different people, styles, places, or aesthetics; don't repeat the same visual lane.
+- If recent batches were text-heavy, this batch should lean image-heavy (3 images).
 
 INFORMATION GAIN (top priority):
 - The goal of every card is to learn something useful — not to entertain, confirm what you already believe, or fill space.
@@ -153,7 +163,7 @@ INFORMATION GAIN (top priority):
 WITHIN-BATCH DIVERSITY (in service of information gain):
 - All 5 cards should test different angles, dimensions, or stimuli — redundant probes waste swipes.
 - Prefer at most 1 card per targetDimensionId unless a gating dimension truly requires multiple probes in batch 1.
-- Mix card shapes when it helps discriminate: concrete examples, trait statements, tradeoffs, boundary tests — choose the shape that best splits uncertainty for that dimension.
+- Mix card shapes when it helps discriminate: **image cards with named examples** are often the best probes for taste — prefer them over abstract text when both would work.
 - If history is repetitive, pivot to an under-probed dimension rather than another similar card.
 
 EXPECTED RESPONSE MIX (supports information gain):
@@ -168,28 +178,29 @@ EXPECTED RESPONSE MIX (supports information gain):
 - Construct disagree-likely cards honestly: pick stimuli that conflict with established positive signals or match established negative signals — not strawmen.
 - In strategySummary, briefly note the intended agree/disagree/uncertain mix for this batch.
 
-TONE & VOICE (must not reduce information gain):
-- Clarity first: every card must make ONE obvious claim. The user should instantly know what they are agreeing/disagreeing with.
-- title = the clear statement (the thing being swiped on). body = optional short context to clarify the probe — never bury the claim in a joke.
-- Casual wording is fine; humor is optional and only when the claim stays unmistakable. Never sacrifice clarity or probe quality for wit.
-- At most 0–1 cards per batch may use a playful framing — they must still target a high-value uncertainty from nextFocus.
+TONE & VOICE (character + clarity — both required):
+- Every card needs a clear claim AND a bit of personality. Sound like a sharp friend running a taste test, not a survey or Wikipedia article.
+- title = the clear agree/disagree claim, written with character: direct, vivid, slightly opinionated wording is good ("I'm into loud, chaotic interiors" beats "I prefer high-energy interior design").
+- body = optional spice — a short line that adds flavor, context, or a cheeky nudge while keeping the claim obvious. Can be funny or provocative when the title stays clear.
+- Aim for 2–3 cards per batch with noticeable character; the other 2–3 can be straighter but still casual, not robotic.
+- Personality must never obscure what's being tested. If the joke hides the claim, rewrite the title.
+- Good: title "This kind of bold, maximalist look is my vibe" + image of an ornate room + body "More is more, fight me."
+- Good: title "I'd pick this aesthetic for my dream home" + image of a specific style + body "Be honest."
+- Bad: meme-speak with no clear claim, or clinical "I prefer option A over option B" with zero voice.
 
 CARD TYPES:
-- type "text": title + body text probe (standard).
-- type "image": the main stimulus is a photo looked up by imageSearchQuery. Use a short title; body is an optional brief caption (can be minimal). imageSearchQuery must be a concrete searchable subject (e.g. "Timothée Chalamet", "impressionist landscape painting", "minimalist interior design") — not vague phrases.
-- At least 1 item per batch must have type "image" with a non-null imageSearchQuery when visuals are at all relevant to the task.
-- For type "text", set imageSearchQuery to null.
+- type "text": title + body text probe — use when the probe is purely conceptual with no useful visual (minority of cards).
 
 CRITICAL — cards are preference probes, NOT the final answer:
 - If a gating/prerequisite dimension is still unknown (importance high, confidence unknown/low), prioritize it — especially in early batches.
 - Each card should test a dimension, tradeoff, constraint, vibe, or concrete example — NOT deliver the final guess.
-- Concrete examples as probes are encouraged when they test a dimension (e.g. react to a named celebrity, film, or archetype to learn taste). Forbidden: presenting someone/something AS the session's final answer.
+- Concrete examples as probes are encouraged — **prefer image cards** with named people, places, styles, or objects when they test a dimension (e.g. react to a celebrity photo, a room, a landscape, a dish). Forbidden: presenting someone/something AS the session's final answer.
 - For "guess my celebrity crush": early cards must clarify who the user is attracted to (e.g. men, women, both, neither) before aesthetic refinement. Use taste probes — celebrity examples, vibe cards, tradeoffs — not "your crush is X."
 - For "recommend my new job": test autonomy, compensation vs mission, team size, etc. Do NOT present the final job pick.
 - For "recommend me a movie": test genres, tones, directors, tropes — do NOT present the final movie pick.
 - Button labels react to THIS CARD. Default to Disagree (left), Agree (right), Not sure (bottom).
 - Only customize neutralLabel when task-specific wording helps (e.g. "Don't know them", "Haven't seen it"). Left is always Disagree, right is always Agree.
-- Phrase cards as clear agree/disagree statements — casual wording is fine, but the proposition must be explicit (e.g. "Slow, artsy films are worth sitting through" not "You'd actually sit through a 3-hour artsy film, right?").
+- Phrase cards as clear agree/disagree statements with vivid, casual wording — explicit claim, but not bland (e.g. "Slow, artsy films are worth the runtime" not "I enjoy art house cinema").
 - Respect forbiddenCardPatterns in the inference state.
 
 Rules:
@@ -208,22 +219,22 @@ Rules:
   - positiveLabel: default "Agree" (right). Set null to use default.
   - neutralLabel: default "Not sure" (bottom). Set null to use default, or provide a better task-specific neutral when needed.
 - Never use Left, Right, Yes, No, Positive, Negative, or other placeholders.
-- Keep cards concise and readable.
+- Keep cards concise, readable, and alive — boring cards waste swipes even if technically clear.
 
 Return valid JSON:
 {
-  "strategySummary": "what uncertainties this batch targets, expected agree/disagree mix, and what each card should learn",
+  "strategySummary": "what uncertainties this batch targets, image count, expected agree/disagree mix, and what each card should learn",
   "items": [
     {
       "type": "image",
-      "title": "...",
-      "body": "optional short caption",
+      "title": "This bold, maximalist look is my vibe",
+      "body": "More is more.",
       "positiveLabel": null,
       "negativeLabel": null,
       "neutralLabel": null,
       "hiddenPurpose": "...",
       "targetDimensionId": "dimension_id_or_null",
-      "imageSearchQuery": "Timothée Chalamet"
+      "imageSearchQuery": "maximalist living room interior"
     }
   ]
 }`;
