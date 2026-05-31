@@ -140,6 +140,13 @@ export function SessionClient({ sessionId, initialState }: SessionClientProps) {
 
         if (predictionFeedback) {
           setFeedback(predictionFeedback);
+          setState((prev) => ({
+            ...prev,
+            answeredCount: session.answeredCount,
+            unansweredCount: session.unansweredCount,
+            canFinalize: session.canFinalize,
+            predictionStats: session.predictionStats,
+          }));
           feedbackTimeout.current = setTimeout(() => {
             setFeedback(null);
             setState(session);
@@ -266,7 +273,6 @@ export function SessionClient({ sessionId, initialState }: SessionClientProps) {
         unansweredCount={state.unansweredCount}
         isGenerating={state.isGenerating}
         canFinalize={state.canFinalize}
-        suggestedMinimum={state.suggestedMinimumResponses}
         onFinalize={handleFinalize}
         onPredictAll={handlePredictAll}
         finalizing={finalizing}

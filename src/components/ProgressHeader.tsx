@@ -7,7 +7,6 @@ type ProgressHeaderProps = {
   unansweredCount: number;
   isGenerating: boolean;
   canFinalize: boolean;
-  suggestedMinimum: number;
   onFinalize: () => void;
   onPredictAll: () => void;
   finalizing: boolean;
@@ -19,13 +18,12 @@ export function ProgressHeader({
   unansweredCount,
   isGenerating,
   canFinalize,
-  suggestedMinimum,
   onFinalize,
   onPredictAll,
   finalizing,
   predictionStats,
 }: ProgressHeaderProps) {
-  const showFinalize = answeredCount >= suggestedMinimum && canFinalize;
+  const showFinalize = canFinalize;
   const showPredictAll = answeredCount >= MIN_ANSWERED_FOR_PREDICTION;
 
   return (

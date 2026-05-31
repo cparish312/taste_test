@@ -140,15 +140,23 @@ ${historyJson}
 
 Generate exactly 5 new cards.
 
-IMAGE CARDS (required — do not skimp):
-- Include **2–3 image cards per batch** (minimum 2). Default to 3 when the task involves people, aesthetics, places, style, art, food, vacation vibes, politics, or anything visual.
-- Only use 1 image card if the task is purely abstract with zero visual angle (rare).
-- Image cards often have the highest information gain for taste/aesthetic/preference tasks — use them aggressively.
-- type "image": the photo (via imageSearchQuery) IS the stimulus. title = clear reaction claim about what they're seeing. body = optional caption with a bit of character.
-- imageSearchQuery must be a concrete searchable subject (e.g. "Timothée Chalamet", "Brutalist architecture interior", "Tokyo street at night") — real names, places, or visual styles, not vague phrases.
+STANDALONE TITLES (required — most important UX rule):
+- The **title alone** must fully state what the user is agreeing or disagreeing with. A user who never sees the image or body must still understand the claim.
+- Never use deictic/vague references that require the image: avoid "this look", "this style", "this vibe", "this person", "like this", "guilty?", "would you though?" without naming the subject in the title.
+- Bad: "This bold, maximalist look is my vibe" — requires seeing the photo.
+- Good: "I'm into bold, maximalist interiors — lots of color, pattern, and clutter."
+- Bad: "I'd pick this aesthetic for my dream home" — what aesthetic?
+- Good: "Mid-century modern with warm wood and clean lines is my dream-home vibe."
+- Bad: "Timothée Chalamet is my type" as title with his photo doing the work — borderline; better: "I'm attracted to soft-featured, artsy guys like Timothée Chalamet."
+- body is optional flavor only — never required to understand the claim. Keep it short or minimal.
+
+IMAGE CARDS (optional entertainment — not the probe):
+- Images are **extra flair**, not the source of meaning. The title carries 100% of the informational load.
+- Use **0–2 image cards per batch** when a fun visual adds energy — never because the card wouldn't make sense without it.
+- Most cards should be type "text" with standalone titles.
+- type "image": title = complete self-contained claim naming the subject explicitly; imageSearchQuery = a related photo for fun; body = optional witty caption (can be empty or minimal).
+- imageSearchQuery must be a concrete searchable subject matching what the title already named (e.g. title mentions "Brutalist architecture" → imageSearchQuery "Brutalist architecture building").
 - For type "text", set imageSearchQuery to null.
-- Vary image subjects across the batch — different people, styles, places, or aesthetics; don't repeat the same visual lane.
-- If recent batches were text-heavy, this batch should lean image-heavy (3 images).
 
 INFORMATION GAIN (top priority):
 - The goal of every card is to learn something useful — not to entertain, confirm what you already believe, or fill space.
@@ -163,7 +171,7 @@ INFORMATION GAIN (top priority):
 WITHIN-BATCH DIVERSITY (in service of information gain):
 - All 5 cards should test different angles, dimensions, or stimuli — redundant probes waste swipes.
 - Prefer at most 1 card per targetDimensionId unless a gating dimension truly requires multiple probes in batch 1.
-- Mix card shapes when it helps discriminate: **image cards with named examples** are often the best probes for taste — prefer them over abstract text when both would work.
+- Mix card shapes when it helps discriminate: trait statements, named examples in the title, tradeoffs, boundary tests — choose the shape that best splits uncertainty.
 - If history is repetitive, pivot to an under-probed dimension rather than another similar card.
 
 EXPECTED RESPONSE MIX (supports information gain):
@@ -179,22 +187,19 @@ EXPECTED RESPONSE MIX (supports information gain):
 - In strategySummary, briefly note the intended agree/disagree/uncertain mix for this batch.
 
 TONE & VOICE (character + clarity — both required):
-- Every card needs a clear claim AND a bit of personality. Sound like a sharp friend running a taste test, not a survey or Wikipedia article.
-- title = the clear agree/disagree claim, written with character: direct, vivid, slightly opinionated wording is good ("I'm into loud, chaotic interiors" beats "I prefer high-energy interior design").
-- body = optional spice — a short line that adds flavor, context, or a cheeky nudge while keeping the claim obvious. Can be funny or provocative when the title stays clear.
-- Aim for 2–3 cards per batch with noticeable character; the other 2–3 can be straighter but still casual, not robotic.
-- Personality must never obscure what's being tested. If the joke hides the claim, rewrite the title.
-- Good: title "This kind of bold, maximalist look is my vibe" + image of an ornate room + body "More is more, fight me."
-- Good: title "I'd pick this aesthetic for my dream home" + image of a specific style + body "Be honest."
-- Bad: meme-speak with no clear claim, or clinical "I prefer option A over option B" with zero voice.
+- Every card needs a clear, **standalone** claim AND a bit of personality. Sound like a sharp friend, not a survey.
+- title = the full agree/disagree statement with character — vivid, direct, self-contained. Put names, styles, and specifics IN the title.
+- body = optional spice only; the title must never depend on it.
+- Aim for 2–3 cards per batch with noticeable character; the rest can be straighter but still casual.
+- Personality must never obscure or replace the claim. If the title isn't understandable alone, rewrite it.
 
 CARD TYPES:
-- type "text": title + body text probe — use when the probe is purely conceptual with no useful visual (minority of cards).
+- type "text": default — standalone title + optional body. Use for most cards.
 
 CRITICAL — cards are preference probes, NOT the final answer:
 - If a gating/prerequisite dimension is still unknown (importance high, confidence unknown/low), prioritize it — especially in early batches.
 - Each card should test a dimension, tradeoff, constraint, vibe, or concrete example — NOT deliver the final guess.
-- Concrete examples as probes are encouraged — **prefer image cards** with named people, places, styles, or objects when they test a dimension (e.g. react to a celebrity photo, a room, a landscape, a dish). Forbidden: presenting someone/something AS the session's final answer.
+- Concrete named examples in the **title** are encouraged when they test a dimension (e.g. a specific celebrity, film genre, political figure, or style — spelled out in the title). Forbidden: presenting someone/something AS the session's final answer.
 - For "guess my celebrity crush": early cards must clarify who the user is attracted to (e.g. men, women, both, neither) before aesthetic refinement. Use taste probes — celebrity examples, vibe cards, tradeoffs — not "your crush is X."
 - For "recommend my new job": test autonomy, compensation vs mission, team size, etc. Do NOT present the final job pick.
 - For "recommend me a movie": test genres, tones, directors, tropes — do NOT present the final movie pick.
@@ -223,11 +228,11 @@ Rules:
 
 Return valid JSON:
 {
-  "strategySummary": "what uncertainties this batch targets, image count, expected agree/disagree mix, and what each card should learn",
+  "strategySummary": "what uncertainties this batch targets, expected agree/disagree mix, and what each card should learn",
   "items": [
     {
       "type": "image",
-      "title": "This bold, maximalist look is my vibe",
+      "title": "I'm into bold, maximalist interiors — lots of color, pattern, and clutter",
       "body": "More is more.",
       "positiveLabel": null,
       "negativeLabel": null,

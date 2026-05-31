@@ -9,6 +9,7 @@ import {
 } from "./predictionService";
 import {
   taskSpecSchema,
+  MIN_ANSWERED_TO_FINALIZE,
   type FinalAnswer,
   type ResponseValue,
   type SessionItem,
@@ -121,8 +122,9 @@ export async function buildSessionState(
           error: failedBatch.error,
         }
       : null,
-    canFinalize: answeredCount >= 1 && session.status === "active",
-    suggestedMinimumResponses: taskSpec.suggestedMinimumResponses ?? 10,
+    canFinalize:
+      answeredCount >= MIN_ANSWERED_TO_FINALIZE && session.status === "active",
+    suggestedMinimumResponses: MIN_ANSWERED_TO_FINALIZE,
     predictionStats,
   };
 }
@@ -243,8 +245,10 @@ export async function finalizeSessionById(
     where: { sessionId },
   });
 
-  if (responseCount < 1) {
-    throw new Error("At least one response is required to finalize");
+  if (responseCount < MIN_ANSWERED_TO_FINALIZE) {
+    throw new Error(
+      `At least ${MIN_ANSWERED_TO_FINALIZE} responses are required to finalize`,
+    );
   }
 
   await prisma.session.update({

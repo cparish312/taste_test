@@ -98,6 +98,7 @@ export type SessionStatus = "active" | "finalizing" | "complete";
 export type BatchStatus = "generating" | "complete" | "failed";
 
 export const MIN_ANSWERED_FOR_PREDICTION = 5;
+export const MIN_ANSWERED_TO_FINALIZE = 5;
 
 export type PredictionStats = {
   enabled: boolean;
