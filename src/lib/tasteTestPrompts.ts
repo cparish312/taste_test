@@ -150,12 +150,15 @@ STANDALONE TITLES (required — most important UX rule):
 - Bad: "Timothée Chalamet is my type" as title with his photo doing the work — borderline; better: "I'm attracted to soft-featured, artsy guys like Timothée Chalamet."
 - body is optional flavor only — never required to understand the claim. Keep it short or minimal.
 
-IMAGE CARDS (optional entertainment — not the probe):
-- Images are **extra flair**, not the source of meaning. The title carries 100% of the informational load.
-- Use **0–2 image cards per batch** when a fun visual adds energy — never because the card wouldn't make sense without it.
-- Most cards should be type "text" with standalone titles.
-- type "image": title = complete self-contained claim naming the subject explicitly; imageSearchQuery = a related photo for fun; body = optional witty caption (can be empty or minimal).
-- imageSearchQuery must be a concrete searchable subject matching what the title already named (e.g. title mentions "Brutalist architecture" → imageSearchQuery "Brutalist architecture building").
+IMAGE CARDS (only when relevant):
+- Default to type "text". Use type "image" **only** when the card is about something inherently visual AND a photo adds meaningful context beyond the title.
+- Relevant: named people (celebrities, politicians), art/architecture/interior styles, places/destinations, fashion, food presentation, album covers, physical aesthetics the user is reacting to.
+- Not relevant — use text only: abstract traits, opinions, hypotheticals, personality dimensions, career/motivation tradeoffs, "is cereal soup" style debates, anything where a stock photo would be decorative filler.
+- Ask before adding an image: "Does this photo help the user react to something specific named in the title?" If no → type "text".
+- Never add images just for energy, variety, or batch quota. Zero image cards in a batch is fine and often correct.
+- The title still carries 100% of the claim — the image never explains the card.
+- type "image": standalone title naming the subject explicitly; imageSearchQuery = concrete match for what the title names; body optional.
+- imageSearchQuery must be a concrete searchable subject (e.g. title mentions "Brutalist architecture" → "Brutalist architecture building"; title mentions "Bernie Sanders" → "Bernie Sanders").
 - For type "text", set imageSearchQuery to null.
 
 INFORMATION GAIN (top priority):

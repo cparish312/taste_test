@@ -217,7 +217,7 @@ export async function generateBatch(
       {
         role: "system",
         content:
-          "You generate preference probe cards optimized for information gain with personality. Every title must stand alone as a complete agree/disagree statement — never rely on an image to explain it. Images are optional entertainment only. Default buttons: Disagree/Agree/Not sure. Return exactly 5 items as structured JSON.",
+          "You generate preference probe cards optimized for information gain with personality. Every title must stand alone as a complete agree/disagree statement. Only use type image when a photo is genuinely relevant to the named subject — otherwise text. Default buttons: Disagree/Agree/Not sure. Return exactly 5 items as structured JSON.",
       },
       {
         role: "user",
